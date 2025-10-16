@@ -1,22 +1,30 @@
-# Terraform AWS ARC (service-name) Module Usage Guide
+# Terraform AWS ARC SQS Module Usage Guide
 
 ## Introduction
 
 ### Purpose of the Document
 
-This document provides guidelines and instructions for users looking to implement the Terraform ________
+This document guides implementation of the Terraform AWS ARC SQS module for managing Amazon SQS queues in AWS infrastructure.
 
 ### Module Overview
 
-The Terraform AWS ARC ________ module provides a secure and modular foundation for deploying ________ on AWS.
+The Terraform AWS ARC SQS module provides a secure and modular foundation for deploying SQS queues on AWS. This module supports both Standard and FIFO queues, with comprehensive features including:
+
+- Standard and FIFO queue configurations
+- Dead Letter Queue (DLQ) support for message failure handling
+- Flexible encryption options (SQS-managed SSE or customer-managed KMS keys)
+- Configurable message retention, visibility timeouts, and polling settings
+- Queue policy management for fine-grained access control
+- Integration with SourceFuse ARC KMS module for enhanced security
 
 ### Prerequisites
 
 Before using this module, ensure you have the following:
 
-- AWS credentials configured.
-- Terraform installed.
-- A working knowledge of AWS VPC, ________, and Terraform concepts.
+- AWS credentials configured
+- Terraform version 1.3 or higher installed
+- AWS Provider version 5.0 or higher
+- A working knowledge of AWS SQS, IAM policies, KMS (optional), and Terraform concepts
 
 ## Getting Started
 
@@ -25,101 +33,295 @@ Before using this module, ensure you have the following:
 To use the module in your Terraform configuration, include the following source block:
 
 ```hcl
-module "arc-________" {
-  source  = "sourcefuse/arc-________/aws"
-  version = "1.5.0"
-  # insert the 6 required variables here
+module "arc-sqs" {
+  source  = "sourcefuse/arc-sqs/aws"
+  version = "0.0.1"  # Use the latest version from Terraform Registry
+
+  name = "my-application-queue"
+
+  tags = module.tags.tags
 }
 ```
 
-Refer to the [Terraform Registry](https://registry.terraform.io/modules/sourcefuse/arc-ecs/aws/latest) for the latest version.
+Refer to the [Terraform Registry](https://registry.terraform.io/modules/sourcefuse/arc-sqs/aws/latest) for the latest version.
 
 ### Integration with Existing Terraform Configurations
 
-Refer to the Terraform Registry for the latest version.
+To integrate with an existing Terraform mono repo configuration:
 
-## Integration with Existing Terraform Configurations
-Integrate the module with your existing Terraform mono repo configuration, follow the steps below:
-
-- Create a new folder in terraform/ named ________.
-- Create the required files, see the examples to base off of.
-- Configure with your backend:
-   - Create the environment backend configuration file: config.<environment>.hcl
-   - region: Where the backend resides
-   - key: <working_directory>/terraform.tfstate
-   - bucket: Bucket name where the terraform state will reside
-   - dynamodb_table: Lock table so there are not duplicate tfplans in the mix
-   - encrypt: Encrypt all traffic to and from the backend
+- Create a new folder in `terraform/` named `sqs` or a service-specific name (e.g., `order-processing-queue`)
+- Create the required files (see the [examples](https://github.com/sourcefuse/terraform-aws-arc-sqs/tree/main/examples) folder for reference):
+  - `main.tf` - Main module configuration
+  - `variables.tf` - Variable declarations
+  - `outputs.tf` - Output values
+  - `versions.tf` - Terraform and provider version constraints
+- Configure your Terraform backend:
+  - Create the environment backend configuration file: `config.<environment>.hcl`
+  - `region`: Where the backend resides
+  - `key`: `<working_directory>/terraform.tfstate`
+  - `bucket`: Bucket name where the terraform state will reside
+  - `dynamodb_table`: Lock table to prevent concurrent terraform operations
+  - `encrypt`: Enable encryption for all traffic to and from the backend
 
 ### Required AWS Permissions
 
-Ensure that the AWS credentials used to execute Terraform have the necessary permissions to create, list and modify:
+AWS credentials require permissions to create, list, and modify:
 
-- 
-- 
-- 
-- 
+- SQS queues (`sqs:CreateQueue`, `sqs:DeleteQueue`, `sqs:GetQueueAttributes`, `sqs:SetQueueAttributes`, `sqs:TagQueue`, `sqs:UntagQueue`)
+- SQS queue policies (`sqs:GetQueueUrl`, `sqs:AddPermission`, `sqs:RemovePermission`)
+- KMS keys (if using customer-managed encryption): `kms:CreateKey`, `kms:CreateAlias`, `kms:DescribeKey`, `kms:EnableKeyRotation`, `kms:GetKeyPolicy`, `kms:PutKeyPolicy`, `kms:TagResource`
+- IAM policy documents: `iam:GetPolicyDocument` (for data source evaluation)
 
 ## Module Configuration
 
 ### Input Variables
 
-For a list of input variables, see the README [Inputs]() section.
+For all input variables, see the README [Inputs](https://github.com/sourcefuse/terraform-aws-arc-sqs#inputs) section.
+
+Key variables:
+
+- **name**: Name of the SQS queue (required)
+- **fifo_config**: Configuration for FIFO queues with message ordering
+- **message_config**: Message handling settings (retention, visibility timeout, polling)
+- **encryption_config**: Encryption settings (SQS-managed or KMS)
+- **dlq_config**: Dead Letter Queue configuration for handling failed messages
+- **policy_config**: Queue access policy configuration
+- **tags**: Resource tagging for organization and cost tracking
 
 ### Output Values
 
-For a list of outputs, see the README [Outputs]() section.
+For all outputs, see the README [Outputs](https://github.com/sourcefuse/terraform-aws-arc-sqs#outputs) section.
+
+Key outputs:
+
+- **queue_id/queue_url**: The URL for accessing the created SQS queue
+- **queue_arn**: The ARN of the SQS queue for IAM policies and cross-service integration
+- **dlq_id/dlq_arn**: Dead Letter Queue identifiers (if enabled)
+- **kms_key_arn**: KMS key ARN (if customer-managed encryption is enabled)
 
 ## Module Usage
 
-### Basic Usage
+The module supports multiple use cases:
 
-For basic usage, see the [example]() folder.
+#### 1. Basic Standard Queue
 
-This example will create:
+Simplest configuration for a standard SQS queue. See [examples/basic-standard-queue](https://github.com/sourcefuse/terraform-aws-arc-sqs/tree/main/examples/basic-standard-queue).
 
-- 
-- 
+```hcl
+module "sqs" {
+  source = "sourcefuse/arc-sqs/aws"
+
+  name = "my-basic-queue"
+
+  tags = module.tags.tags
+}
+```
+
+Creates:
+- Standard SQS queue with default message retention (4 days)
+- SQS-managed encryption (SSE-SQS)
+- Default visibility timeout (30 seconds)
+
+#### 2. Standard Queue with Dead Letter Queue
+
+Reliable message processing with failure handling. See [examples/standard-queue-with-dlq](https://github.com/sourcefuse/terraform-aws-arc-sqs/tree/main/examples/standard-queue-with-dlq).
+
+```hcl
+module "sqs" {
+  source = "sourcefuse/arc-sqs/aws"
+
+  name = "my-queue-with-dlq"
+
+  message_config = {
+    retention_seconds         = 345600  # 4 days
+    visibility_timeout        = 300     # 5 minutes
+    receive_wait_time_seconds = 20      # Enable long polling
+  }
+
+  dlq_config = {
+    enabled                   = true
+    max_receive_count         = 5
+    message_retention_seconds = 1209600  # 14 days for troubleshooting
+  }
+
+  tags = module.tags.tags
+}
+```
+
+Creates:
+- Standard SQS queue with long polling enabled
+- Automatically configured Dead Letter Queue
+- Extended retention for failed messages (14 days)
+
+#### 3. FIFO Queue
+
+Strict message ordering and exactly-once processing. See [examples/fifo-queue](https://github.com/sourcefuse/terraform-aws-arc-sqs/tree/main/examples/fifo-queue).
+
+```hcl
+module "sqs" {
+  source = "sourcefuse/arc-sqs/aws"
+
+  name = "my-fifo-queue.fifo"  # Must end with .fifo
+
+  fifo_config = {
+    enabled                     = true
+    content_based_deduplication = true
+    deduplication_scope         = "messageGroup"
+    throughput_limit            = "perMessageGroupId"
+  }
+
+  tags = module.tags.tags
+}
+```
+
+Creates:
+- FIFO queue with message ordering guarantees
+- Content-based deduplication preventing duplicate processing
+- High throughput mode with per-message-group limits
+
+#### 4. Encrypted Queue with KMS
+
+Sensitive data with customer-managed encryption. See [examples/encrypted-queue](https://github.com/sourcefuse/terraform-aws-arc-sqs/tree/main/examples/encrypted-queue).
+
+```hcl
+module "sqs" {
+  source = "sourcefuse/arc-sqs/aws"
+
+  name = "my-encrypted-queue"
+
+  encryption_config = {
+    kms_encryption_enabled       = true
+    create_kms_key               = true
+    kms_key_rotation_enabled     = true
+    kms_data_key_reuse_period    = 300
+    kms_key_deletion_window_days = 30
+  }
+
+  tags = module.tags.tags
+}
+```
+
+Creates:
+- SQS queue with customer-managed KMS encryption
+- Dedicated KMS key with automatic rotation
+- Enhanced security for sensitive workloads
+
+#### 5. SNS Fanout Queue
+
+Pub/sub pattern with SNS topic distribution to multiple queues. See [examples/sns-fanout-queue](https://github.com/sourcefuse/terraform-aws-arc-sqs/tree/main/examples/sns-fanout-queue).
+
+```hcl
+module "sqs" {
+  source = "sourcefuse/arc-sqs/aws"
+
+  name = "my-fanout-queue"
+
+  policy_config = {
+    create = true
+    source_policy_documents = [
+      data.aws_iam_policy_document.sns_publish.json
+    ]
+  }
+
+  tags = module.tags.tags
+}
+```
+
+Creates:
+- SQS queue configured to receive messages from SNS
+- Queue policy granting SNS publish permissions
+- Fanout messaging pattern
 
 ### Tips and Recommendations
 
-- The module focuses on provisioning ________. The convention-based approach enables downstream services to easily attach to the ________. Adjust the configuration parameters as needed for your specific use case.
+- **Use Dead Letter Queues**: Enable DLQs in production to capture and troubleshoot failed messages instead of losing them after max retries
+- **Enable Long Polling**: Set `receive_wait_time_seconds = 20` to reduce empty receives and lower costs
+- **Choose the Right Queue Type**: Use FIFO queues only when strict ordering is required, as they have lower throughput limits compared to Standard queues
+- **Implement Proper Visibility Timeouts**: Set `visibility_timeout` longer than your processing time to prevent duplicate processing
+- **Use KMS for Sensitive Data**: Enable customer-managed encryption for queues handling sensitive information
+- **Tag Your Resources**: Use consistent tagging for cost allocation and resource management
+- **Monitor Queue Metrics**: Set up CloudWatch alarms for metrics like `ApproximateAgeOfOldestMessage` and `ApproximateNumberOfMessagesVisible`
+- **Configure Appropriate Retention**: Balance between storage costs and message recovery needs (default: 4 days, max: 14 days)
 
 ## Troubleshooting
 
+### Common Issues
+
+**Issue: FIFO queue name validation error**
+- **Solution**: Ensure FIFO queue names end with `.fifo` suffix
+
+**Issue: Messages not appearing in DLQ**
+- **Solution**: Verify `max_receive_count` is set appropriately and check the DLQ redrive policy
+
+**Issue: KMS encryption errors**
+- **Solution**: Ensure the KMS key policy grants appropriate permissions to SQS service principal and consuming services
+
+**Issue: Access denied when consuming messages**
+- **Solution**: Verify IAM policies grant necessary SQS permissions (`sqs:ReceiveMessage`, `sqs:DeleteMessage`, etc.)
+
 ### Reporting Issues
 
-If you encounter a bug or issue, please report it on the [GitHub repository]().
+Report bugs and issues on the [GitHub repository](https://github.com/sourcefuse/terraform-aws-arc-sqs/issues).
 
 ## Security Considerations
 
-### AWS VPC
+### Encryption at Rest
 
-Understand the security considerations related to ________ on AWS when using this module.
+This module supports two encryption methods:
 
-### Best Practices for AWS ___
+- **SQS-Managed SSE (SSE-SQS)**: Default encryption using AWS-managed keys
+- **Customer-Managed KMS (SSE-KMS)**: Enhanced security with customer-controlled key rotation and access policies
 
-Follow best practices to ensure secure ________ configurations:
+For sensitive workloads, use customer-managed KMS encryption with automatic key rotation enabled.
 
-- [AWS ________ Security Best Practices]()
+### Queue Access Policies
+
+Implement least-privilege access using queue policies:
+
+- Restrict access to specific AWS accounts or services
+- Use condition keys to enforce encryption in transit (`aws:SecureTransport`)
+- Limit actions to only what's necessary for each principal
+
+### Best Practices for AWS SQS Security
+
+Follow AWS security best practices when using this module:
+
+- [AWS SQS Security Best Practices](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-security-best-practices.html)
+- [AWS KMS Best Practices](https://docs.aws.amazon.com/kms/latest/developerguide/best-practices.html)
+- Enable encryption in transit by using HTTPS endpoints
+- Regularly rotate KMS keys (automatically handled when `kms_key_rotation_enabled = true`)
+- Monitor queue access using AWS CloudTrail
+- Implement proper IAM policies for queue producers and consumers
+
+### Data Privacy
+
+- Enable Dead Letter Queues to prevent data loss
+- Set appropriate message retention periods based on compliance requirements
+- Use KMS encryption for data subject to regulatory requirements (HIPAA, PCI-DSS, etc.)
 
 ## Contributing and Community Support
 
 ### Contributing Guidelines
 
-Contribute to the module by following the guidelines outlined in the [CONTRIBUTING.md]() file.
+Follow the guidelines in [CONTRIBUTING.md](https://github.com/sourcefuse/terraform-aws-arc-sqs/blob/main/CONTRIBUTING.md).
+
+Contributions welcome:
+- Bug fixes and issue reports
+- Feature enhancements
+- Documentation improvements
+- Example implementations
 
 ### Reporting Bugs and Issues
 
-If you find a bug or issue, report it on the [GitHub repository]().
+Report bugs on the [GitHub repository](https://github.com/sourcefuse/terraform-aws-arc-sqs/issues).
+
+Include:
+- Terraform version
+- Module version
+- Minimal reproduction code
+- Expected vs actual behavior
+- Relevant error messages or logs
 
 ## License
 
-### License Information
-
-This module is licensed under the Apache 2.0 license. Refer to the [LICENSE]() file for more details.
-
-### Open Source Contribution
-
-Contribute to open source by using and enhancing this module. Your contributions are welcome!
-
+This module is licensed under the Apache 2.0 license. See [LICENSE](https://github.com/sourcefuse/terraform-aws-arc-sqs/blob/main/LICENSE) for details.

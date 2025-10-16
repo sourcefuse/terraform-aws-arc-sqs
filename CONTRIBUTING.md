@@ -25,16 +25,17 @@ To ensure a smooth collaboration, please take a moment to review the following g
 6. Open a pull request in the original repository with a clear title and description.
    If your pull request addresses an issue, please reference the issue number in the pull request description.
 
-### Git commits
+### Git Commits
 
-while Contributing or doing git commit please specify the breaking change in your commit message whether its major,minor or patch
+Specify version bump in commit messages using `#major`, `#minor`, or `#patch`.
 
-For Example
+Example:
 
 ```sh
 git commit -m "your commit message #major"
 ```
-By specifying this , it will bump the version and if you don't specify this in your commit message then by default it will consider patch and will bump that accordingly
+
+Default: `#patch`
 
 # Terraform Code Collaboration Guidelines
 

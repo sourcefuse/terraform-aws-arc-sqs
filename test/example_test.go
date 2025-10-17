@@ -9,6 +9,9 @@ import (
 )
 
 func TestBasicStandardQueue(t *testing.T) {
+	// Constants
+	const expectedQueueName = "basic-standard-queue"
+
 	// Arrange
 	terraformOptions := &terraform.Options{
 		TerraformDir: "../examples/basic-standard-queue",
@@ -26,17 +29,17 @@ func TestBasicStandardQueue(t *testing.T) {
 
 	// Verify queue name is set
 	assert.NotEmpty(t, queueName)
-	assert.Equal(t, "basic-standard-queue", queueName)
+	assert.Equal(t, expectedQueueName, queueName)
 
 	// Verify ARN format
 	assert.NotEmpty(t, queueArn)
 	assert.Contains(t, queueArn, "arn:aws:sqs:")
-	assert.Contains(t, queueArn, "basic-standard-queue")
+	assert.Contains(t, queueArn, expectedQueueName)
 
 	// Verify URL format
 	assert.NotEmpty(t, queueUrl)
 	assert.True(t, strings.HasPrefix(queueUrl, "https://sqs."))
-	assert.Contains(t, queueUrl, "basic-standard-queue")
+	assert.Contains(t, queueUrl, expectedQueueName)
 
 	// Verify queue ID matches URL
 	assert.Equal(t, queueUrl, queueId)

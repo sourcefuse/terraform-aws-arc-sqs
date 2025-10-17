@@ -15,12 +15,67 @@ module "tags" {
   }
 }
 
+data "aws_caller_identity" "current" {}
+
 ################################################################################
-# SNS Topic for Fan-out Pattern
+# KMS Key for SNS Topic Encryption
 ################################################################################
 
-resource "aws_sns_topic" "fanout" {
-  name = var.sns_topic_name
+# KMS Key Policy for SNS
+data "aws_iam_policy_document" "sns_kms_policy" {
+  statement {
+    sid    = "Enable IAM User Permissions"
+    effect = "Allow"
+    principals {
+      type        = "AWS"
+      identifiers = ["arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"]
+    }
+    actions   = ["kms:*"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid    = "Allow SNS to use the key"
+    effect = "Allow"
+    principals {
+      type        = "Service"
+      identifiers = ["sns.amazonaws.com"]
+    }
+    actions = [
+      "kms:Decrypt",
+      "kms:GenerateDataKey"
+    ]
+    resources = ["*"]
+  }
+}
+
+module "sns_kms" {
+  source  = "sourcefuse/arc-kms/aws"
+  version = "1.0.11"
+
+  deletion_window_in_days = 7
+  enable_key_rotation     = true
+  alias                   = "alias/${var.sns_topic_name}/sns-key"
+  policy                  = data.aws_iam_policy_document.sns_kms_policy.json
+
+  tags = merge(
+    module.tags.tags,
+    {
+      Name = "${var.sns_topic_name}-kms-key"
+    }
+  )
+}
+
+################################################################################
+# SNS Topic for Fan-out Pattern using SourceFuse ARC SNS Module
+################################################################################
+
+module "sns_topic" {
+  source = "git::https://github.com/sourcefuse/terraform-aws-arc-sns.git?ref=sns"
+
+  name              = var.sns_topic_name
+  kms_master_key_id = module.sns_kms.key_arn # Enable encryption
+
   tags = module.tags.tags
 }
 
@@ -64,7 +119,7 @@ data "aws_iam_policy_document" "sns_sqs_policy" {
     condition {
       test     = "ArnEquals"
       variable = "aws:SourceArn"
-      values   = [aws_sns_topic.fanout.arn]
+      values   = [module.sns_topic.topic_arn]
     }
   }
 }
@@ -76,7 +131,7 @@ resource "aws_sqs_queue_policy" "sns_sqs_policy" {
 
 # Subscribe SQS to SNS
 resource "aws_sns_topic_subscription" "sqs_subscription" {
-  topic_arn = aws_sns_topic.fanout.arn
+  topic_arn = module.sns_topic.topic_arn
   protocol  = "sqs"
   endpoint  = module.sqs_primary.queue_arn
 }
@@ -124,7 +179,7 @@ resource "aws_sqs_queue_policy" "sns_sqs_policy_secondary" {
       Resource = module.sqs_secondary[0].queue_arn
       Condition = {
         ArnEquals = {
-          "aws:SourceArn" = aws_sns_topic.fanout.arn
+          "aws:SourceArn" = module.sns_topic.topic_arn
         }
       }
     }]
@@ -135,7 +190,7 @@ resource "aws_sqs_queue_policy" "sns_sqs_policy_secondary" {
 resource "aws_sns_topic_subscription" "sqs_subscription_secondary" {
   count = var.create_secondary_queue ? 1 : 0
 
-  topic_arn = aws_sns_topic.fanout.arn
+  topic_arn = module.sns_topic.topic_arn
   protocol  = "sqs"
   endpoint  = module.sqs_secondary[0].queue_arn
 }

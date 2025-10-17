@@ -1,11 +1,16 @@
 output "sns_topic_arn" {
   description = "The ARN of the SNS topic"
-  value       = aws_sns_topic.fanout.arn
+  value       = module.sns_topic.topic_arn
 }
 
 output "sns_topic_name" {
   description = "The name of the SNS topic"
-  value       = aws_sns_topic.fanout.name
+  value       = module.sns_topic.topic_name
+}
+
+output "sns_kms_key_arn" {
+  description = "The ARN of the KMS key used for SNS topic encryption"
+  value       = module.sns_kms.key_arn
 }
 
 output "primary_queue_id" {

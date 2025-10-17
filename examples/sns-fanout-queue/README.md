@@ -4,7 +4,8 @@ Configuration demonstrating the pub/sub fanout pattern where an SNS topic distri
 
 ## What This Example Creates
 
-- SNS topic for message distribution
+- SNS topic with KMS encryption for secure message distribution
+- Dedicated KMS key for SNS topic encryption
 - Primary SQS queue subscribed to SNS topic
 - Optional secondary SQS queue (fanout pattern)
 - Queue policies granting SNS publish permissions
@@ -27,6 +28,13 @@ This example demonstrates:
 - **Scalability**: Easy to add more subscribers without modifying publishers
 - **Reliability**: Each queue has its own DLQ for independent failure handling
 
+## Security Features
+
+- **SNS Encryption**: SNS topic uses customer-managed KMS encryption
+- **Key Rotation**: Automatic KMS key rotation enabled
+- **SQS Encryption**: All queues use SQS-managed encryption
+- **Least Privilege**: Queue policies restrict access to SNS service only
+
 <!-- BEGINNING OF PRE-COMMIT-TERRAFORM DOCS HOOK -->
 ## Requirements
 
@@ -39,12 +47,14 @@ This example demonstrates:
 
 | Name | Version |
 |------|---------|
-| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.16.0 |
+| <a name="provider_aws"></a> [aws](#provider\_aws) | 6.17.0 |
 
 ## Modules
 
 | Name | Source | Version |
 |------|--------|---------|
+| <a name="module_sns_kms"></a> [sns\_kms](#module\_sns\_kms) | sourcefuse/arc-kms/aws | 1.0.11 |
+| <a name="module_sns_topic"></a> [sns\_topic](#module\_sns\_topic) | git::https://github.com/sourcefuse/terraform-aws-arc-sns.git | sns |
 | <a name="module_sqs_primary"></a> [sqs\_primary](#module\_sqs\_primary) | ../.. | n/a |
 | <a name="module_sqs_secondary"></a> [sqs\_secondary](#module\_sqs\_secondary) | ../.. | n/a |
 | <a name="module_tags"></a> [tags](#module\_tags) | sourcefuse/arc-tags/aws | 1.2.3 |
@@ -53,11 +63,12 @@ This example demonstrates:
 
 | Name | Type |
 |------|------|
-| [aws_sns_topic.fanout](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic) | resource |
 | [aws_sns_topic_subscription.sqs_subscription](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic_subscription) | resource |
 | [aws_sns_topic_subscription.sqs_subscription_secondary](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic_subscription) | resource |
 | [aws_sqs_queue_policy.sns_sqs_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sqs_queue_policy) | resource |
 | [aws_sqs_queue_policy.sns_sqs_policy_secondary](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sqs_queue_policy) | resource |
+| [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
+| [aws_iam_policy_document.sns_kms_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.sns_sqs_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 
 ## Inputs
@@ -83,6 +94,7 @@ This example demonstrates:
 | <a name="output_secondary_queue_arn"></a> [secondary\_queue\_arn](#output\_secondary\_queue\_arn) | The ARN of the secondary SQS queue |
 | <a name="output_secondary_queue_id"></a> [secondary\_queue\_id](#output\_secondary\_queue\_id) | The URL for the secondary SQS queue |
 | <a name="output_secondary_queue_name"></a> [secondary\_queue\_name](#output\_secondary\_queue\_name) | The name of the secondary SQS queue |
+| <a name="output_sns_kms_key_arn"></a> [sns\_kms\_key\_arn](#output\_sns\_kms\_key\_arn) | The ARN of the KMS key used for SNS topic encryption |
 | <a name="output_sns_topic_arn"></a> [sns\_topic\_arn](#output\_sns\_topic\_arn) | The ARN of the SNS topic |
 | <a name="output_sns_topic_name"></a> [sns\_topic\_name](#output\_sns\_topic\_name) | The name of the SNS topic |
 <!-- END OF PRE-COMMIT-TERRAFORM DOCS HOOK -->

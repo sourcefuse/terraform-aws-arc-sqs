@@ -14,8 +14,8 @@ locals {
     )
   ) : null
 
-  kms_key_id = var.kms_key != null ? var.kms_key : (
-    var.create_key ? module.kms[0].key_arn : null
+  kms_key_id = var.kms_config != null && var.kms_config.key_arn != null ? var.kms_config.key_arn : (
+    var.kms_config != null && var.kms_config.create_key ? module.kms[0].key_arn : null
   )
 
   kms_data_key_reuse_period = var.kms_config != null ? var.kms_config.data_key_reuse_period : 300
@@ -50,5 +50,5 @@ locals {
 
   dlq_count          = var.dlq_config.enabled ? 1 : 0
   queue_policy_count = var.policy_config.create ? 1 : 0
-  kms_count          = var.create_key && var.kms_key == null ? 1 : 0
+  kms_count          = var.kms_config != null && var.kms_config.create_key && var.kms_config.key_arn == null ? 1 : 0
 }

@@ -82,9 +82,7 @@ Key variables:
 - **name**: Name of the SQS queue (required)
 - **fifo_config**: Configuration for FIFO queues with message ordering
 - **message_config**: Message handling settings (retention, visibility timeout, polling)
-- **kms_key**: ARN of existing KMS key for encryption (optional)
-- **create_key**: Boolean to create new KMS key (optional)
-- **kms_config**: Configuration for creating new KMS key (optional)
+- **kms_config**: KMS encryption configuration (key_arn for existing key, create_key for new key)
 - **dlq_config**: Dead Letter Queue configuration for handling failed messages
 - **policy_config**: Queue access policy configuration
 - **tags**: Resource tagging for organization and cost tracking
@@ -190,8 +188,8 @@ module "sqs" {
 
   name = "my-encrypted-queue"
 
-  create_key = true
   kms_config = {
+    create_key           = true
     deletion_window_days = 30
     rotation_enabled     = true
   }
@@ -210,8 +208,11 @@ Creates:
 module "sqs" {
   source = "sourcefuse/arc-sqs/aws"
 
-  name    = "my-encrypted-queue"
-  kms_key = "arn:aws:kms:us-east-1:123456789012:key/abc..."
+  name = "my-encrypted-queue"
+
+  kms_config = {
+    key_arn = "arn:aws:kms:us-east-1:123456789012:key/abc..."
+  }
 
   tags = module.tags.tags
 }
@@ -300,7 +301,7 @@ Follow AWS security best practices when using this module:
 - [AWS SQS Security Best Practices](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-security-best-practices.html)
 - [AWS KMS Best Practices](https://docs.aws.amazon.com/kms/latest/developerguide/best-practices.html)
 - Enable encryption in transit by using HTTPS endpoints
-- Regularly rotate KMS keys (automatically handled when `create_key = true` with `kms_config.rotation_enabled = true`)
+- Regularly rotate KMS keys (automatically handled when `kms_config.create_key = true` with `kms_config.rotation_enabled = true`)
 - Monitor queue access using AWS CloudTrail
 - Implement proper IAM policies for queue producers and consumers
 

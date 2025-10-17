@@ -23,12 +23,11 @@ module "sqs" {
 
   name = var.queue_name
 
-  kms_key    = var.kms_key_arn
-  create_key = var.create_kms_key
-  kms_config = var.create_kms_key ? {
-    deletion_window_days = var.kms_deletion_window_days
-    rotation_enabled     = var.kms_rotation_enabled
-  } : null
+  kms_config = {
+    create_key           = true
+    deletion_window_days = 30
+    rotation_enabled     = true
+  }
 
   dlq_config = {
     enabled                   = true

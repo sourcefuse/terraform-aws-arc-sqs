@@ -88,21 +88,11 @@ variable "message_config" {
 # Encryption Configuration
 ################################################################################
 
-variable "kms_key" {
-  description = "ARN of existing KMS key for queue encryption. If null and create_key=false, uses AWS managed SSE-SQS encryption"
-  type        = string
-  default     = null
-}
-
-variable "create_key" {
-  description = "Whether to create a new KMS key for queue encryption. Ignored if kms_key is provided"
-  type        = bool
-  default     = false
-}
-
 variable "kms_config" {
-  description = "Configuration for creating a new KMS key. Only used if create_key=true and kms_key=null"
+  description = "KMS encryption configuration. If null, uses AWS managed SSE-SQS encryption"
   type = object({
+    key_arn               = optional(string, null)
+    create_key            = optional(bool, false)
     data_key_reuse_period = optional(number, 300)
     deletion_window_days  = optional(number, 7)
     rotation_enabled      = optional(bool, true)

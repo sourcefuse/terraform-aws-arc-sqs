@@ -38,7 +38,11 @@ terraform apply
 ### Create New KMS Key:
 Edit `terraform.tfvars` and uncomment:
 ```hcl
-create_kms_key = true
+kms_config = {
+  create_key           = true
+  deletion_window_days = 30
+  rotation_enabled     = true
+}
 ```
 Then run:
 ```bash
@@ -48,7 +52,9 @@ terraform apply
 ### Use Existing KMS Key:
 Edit `terraform.tfvars` and uncomment:
 ```hcl
-kms_key_arn = "arn:aws:kms:us-east-1:123456789012:key/your-key-id"
+kms_config = {
+  key_arn = "arn:aws:kms:us-east-1:123456789012:key/your-key-id"
+}
 ```
 Then run:
 ```bash
@@ -82,11 +88,7 @@ No resources.
 
 | Name | Description | Type | Default | Required |
 |------|-------------|------|---------|:--------:|
-| <a name="input_create_kms_key"></a> [create\_kms\_key](#input\_create\_kms\_key) | Whether to create a new KMS key for encryption. Only used if kms\_key\_arn is not provided | `bool` | `false` | no |
 | <a name="input_environment"></a> [environment](#input\_environment) | Name of the environment, i.e. dev, stage, prod | `string` | `"poc"` | no |
-| <a name="input_kms_deletion_window_days"></a> [kms\_deletion\_window\_days](#input\_kms\_deletion\_window\_days) | KMS key deletion window in days | `number` | `30` | no |
-| <a name="input_kms_key_arn"></a> [kms\_key\_arn](#input\_kms\_key\_arn) | ARN of existing KMS key to use. If provided, a new KMS key will not be created | `string` | `null` | no |
-| <a name="input_kms_rotation_enabled"></a> [kms\_rotation\_enabled](#input\_kms\_rotation\_enabled) | Enable automatic KMS key rotation | `bool` | `true` | no |
 | <a name="input_namespace"></a> [namespace](#input\_namespace) | Namespace of the project, i.e. refarch | `string` | `"arc"` | no |
 | <a name="input_queue_name"></a> [queue\_name](#input\_queue\_name) | Name of the encrypted SQS queue | `string` | `"encrypted-sensitive-data-queue"` | no |
 | <a name="input_region"></a> [region](#input\_region) | AWS Region | `string` | `"us-east-1"` | no |

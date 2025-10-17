@@ -6,7 +6,7 @@ module "kms" {
   source  = "sourcefuse/arc-kms/aws"
   version = "1.0.11"
 
-  for_each = local.kms_map
+  count = local.kms_count
 
   deletion_window_in_days = var.encryption_config.kms_key_deletion_window_days
   enable_key_rotation     = var.encryption_config.kms_key_rotation_enabled
@@ -27,7 +27,7 @@ module "kms" {
 ################################################################################
 
 resource "aws_sqs_queue" "dlq" {
-  for_each = local.dlq_map
+  count = local.dlq_count
 
   # Naming
   name        = var.use_name_prefix ? null : local.dlq_name
@@ -95,7 +95,7 @@ resource "aws_sqs_queue" "this" {
 
   # Redrive Policy for DLQ
   redrive_policy = var.dlq_config.enabled ? jsonencode({
-    deadLetterTargetArn = aws_sqs_queue.dlq["this"].arn
+    deadLetterTargetArn = aws_sqs_queue.dlq[0].arn
     maxReceiveCount     = var.dlq_config.max_receive_count
   }) : var.custom_redrive_policy
 
@@ -117,7 +117,7 @@ resource "aws_sqs_queue" "this" {
 ################################################################################
 
 data "aws_iam_policy_document" "this" {
-  for_each = local.queue_policy_map
+  count = local.queue_policy_count
 
   source_policy_documents   = var.policy_config.source_policy_documents
   override_policy_documents = var.policy_config.override_policy_documents
@@ -139,8 +139,8 @@ data "aws_iam_policy_document" "this" {
 }
 
 resource "aws_sqs_queue_policy" "this" {
-  for_each = local.queue_policy_map
+  count = local.queue_policy_count
 
   queue_url = aws_sqs_queue.this.id
-  policy    = var.policy_config.policy_json != null ? var.policy_config.policy_json : data.aws_iam_policy_document.this["this"].json
+  policy    = var.policy_config.policy_json != null ? var.policy_config.policy_json : data.aws_iam_policy_document.this[0].json
 }

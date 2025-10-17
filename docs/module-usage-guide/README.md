@@ -15,7 +15,6 @@ The Terraform AWS ARC SQS module provides a secure and modular foundation for de
 - Flexible encryption options (SQS-managed SSE or customer-managed KMS keys)
 - Configurable message retention, visibility timeouts, and polling settings
 - Queue policy management for fine-grained access control
-- Integration with SourceFuse ARC KMS module for enhanced security
 
 ### Prerequisites
 

@@ -12,7 +12,6 @@ SourceFuse AWS Reference Architecture (ARC) Terraform module for managing Amazon
 - **Message Configuration**: Fine-grained control over retention, visibility timeouts, delays, and long polling
 - **Queue Policies**: Integrated IAM policy management with support for cross-account and service access patterns
 - **High Throughput FIFO**: Advanced FIFO configurations with per-message-group throughput and deduplication scopes
-- **CloudWatch Integration**: Built-in tagging and naming conventions for monitoring and alerting
 - **Modular Design**: Integrates seamlessly with other SourceFuse ARC modules (KMS, Tags, Monitoring)
 
 ## Usage

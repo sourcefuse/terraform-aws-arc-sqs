@@ -71,7 +71,8 @@ module "sns_kms" {
 ################################################################################
 
 module "sns_topic" {
-  source = "git::https://github.com/sourcefuse/terraform-aws-arc-sns.git?ref=sns"
+  source  = "sourcefuse/arc-sns/aws"
+  version = "0.0.2"
 
   name              = var.sns_topic_name
   kms_master_key_id = module.sns_kms.key_arn # Enable encryption
@@ -99,10 +100,16 @@ module "sqs_primary" {
     max_receive_count = 3
   }
 
+  # Use module's built-in policy feature to allow SNS access
+  policy_config = {
+    create                  = true
+    source_policy_documents = [data.aws_iam_policy_document.sns_sqs_policy.json]
+  }
+
   tags = module.tags.tags
 }
 
-# Policy to allow SNS to send messages
+# Policy to allow SNS to send messages to primary queue
 data "aws_iam_policy_document" "sns_sqs_policy" {
   statement {
     sid    = "AllowSNSToSendMessages"
@@ -124,11 +131,6 @@ data "aws_iam_policy_document" "sns_sqs_policy" {
   }
 }
 
-resource "aws_sqs_queue_policy" "sns_sqs_policy" {
-  queue_url = module.sqs_primary.queue_id
-  policy    = data.aws_iam_policy_document.sns_sqs_policy.json
-}
-
 # Subscribe SQS to SNS
 resource "aws_sns_topic_subscription" "sqs_subscription" {
   topic_arn = module.sns_topic.topic_arn
@@ -139,6 +141,30 @@ resource "aws_sns_topic_subscription" "sqs_subscription" {
 ################################################################################
 # Secondary Queue (Optional - for fan-out demonstration)
 ################################################################################
+
+# Policy document for secondary queue
+data "aws_iam_policy_document" "sns_sqs_policy_secondary" {
+  count = var.create_secondary_queue ? 1 : 0
+
+  statement {
+    sid    = "AllowSNSToSendMessages"
+    effect = "Allow"
+
+    principals {
+      type        = "Service"
+      identifiers = ["sns.amazonaws.com"]
+    }
+
+    actions   = ["sqs:SendMessage"]
+    resources = [module.sqs_secondary[0].queue_arn]
+
+    condition {
+      test     = "ArnEquals"
+      variable = "aws:SourceArn"
+      values   = [module.sns_topic.topic_arn]
+    }
+  }
+}
 
 module "sqs_secondary" {
   count = var.create_secondary_queue ? 1 : 0
@@ -157,32 +183,14 @@ module "sqs_secondary" {
     max_receive_count = 3
   }
 
+  # Use module's built-in policy feature to allow SNS access
+  policy_config = {
+    create                  = true
+    source_policy_documents = [data.aws_iam_policy_document.sns_sqs_policy_secondary[0].json]
+  }
+
   tags = merge(module.tags.tags, {
     QueueType = "Secondary"
-  })
-}
-
-# Policy for secondary queue
-resource "aws_sqs_queue_policy" "sns_sqs_policy_secondary" {
-  count = var.create_secondary_queue ? 1 : 0
-
-  queue_url = module.sqs_secondary[0].queue_id
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Sid    = "AllowSNSToSendMessages"
-      Effect = "Allow"
-      Principal = {
-        Service = "sns.amazonaws.com"
-      }
-      Action   = "sqs:SendMessage"
-      Resource = module.sqs_secondary[0].queue_arn
-      Condition = {
-        ArnEquals = {
-          "aws:SourceArn" = module.sns_topic.topic_arn
-        }
-      }
-    }]
   })
 }
 

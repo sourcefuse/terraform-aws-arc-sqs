@@ -21,7 +21,7 @@ locals {
   # 3. No encryption (null)
   kms_key_id = var.encryption_config.kms_encryption_enabled ? (
     var.encryption_config.existing_kms_key_id != null ? var.encryption_config.existing_kms_key_id : (
-      length(module.kms) > 0 ? module.kms["this"].key_arn : null
+      local.kms_count > 0 ? module.kms[0].key_arn : null
     )
   ) : null
 
@@ -53,10 +53,8 @@ locals {
     ]
   })
 
-  # Create maps for for_each
-  dlq_map          = var.dlq_config.enabled ? { "this" = true } : {}
-  queue_policy_map = var.policy_config.create ? { "this" = true } : {}
-  kms_map = var.encryption_config.kms_encryption_enabled && var.encryption_config.existing_kms_key_id == null && var.encryption_config.create_kms_key ? {
-    "this" = true
-  } : {}
+  # Count values for conditional resource creation
+  dlq_count          = var.dlq_config.enabled ? 1 : 0
+  queue_policy_count = var.policy_config.create ? 1 : 0
+  kms_count          = var.encryption_config.kms_encryption_enabled && var.encryption_config.existing_kms_key_id == null && var.encryption_config.create_kms_key ? 1 : 0
 }

@@ -54,7 +54,7 @@ This example demonstrates:
 | Name | Source | Version |
 |------|--------|---------|
 | <a name="module_sns_kms"></a> [sns\_kms](#module\_sns\_kms) | sourcefuse/arc-kms/aws | 1.0.11 |
-| <a name="module_sns_topic"></a> [sns\_topic](#module\_sns\_topic) | git::https://github.com/sourcefuse/terraform-aws-arc-sns.git | sns |
+| <a name="module_sns_topic"></a> [sns\_topic](#module\_sns\_topic) | sourcefuse/arc-sns/aws | 0.0.2 |
 | <a name="module_sqs_primary"></a> [sqs\_primary](#module\_sqs\_primary) | ../.. | n/a |
 | <a name="module_sqs_secondary"></a> [sqs\_secondary](#module\_sqs\_secondary) | ../.. | n/a |
 | <a name="module_tags"></a> [tags](#module\_tags) | sourcefuse/arc-tags/aws | 1.2.3 |
@@ -65,11 +65,10 @@ This example demonstrates:
 |------|------|
 | [aws_sns_topic_subscription.sqs_subscription](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic_subscription) | resource |
 | [aws_sns_topic_subscription.sqs_subscription_secondary](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sns_topic_subscription) | resource |
-| [aws_sqs_queue_policy.sns_sqs_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sqs_queue_policy) | resource |
-| [aws_sqs_queue_policy.sns_sqs_policy_secondary](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/sqs_queue_policy) | resource |
 | [aws_caller_identity.current](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/caller_identity) | data source |
 | [aws_iam_policy_document.sns_kms_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 | [aws_iam_policy_document.sns_sqs_policy](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
+| [aws_iam_policy_document.sns_sqs_policy_secondary](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/iam_policy_document) | data source |
 
 ## Inputs
 

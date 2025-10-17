@@ -77,6 +77,25 @@ module "sns_topic" {
   name              = var.sns_topic_name
   kms_master_key_id = module.sns_kms.key_arn # Enable encryption
 
+  # Create subscriptions for SQS queues
+  create_subscription = true
+  subscriptions = merge(
+    {
+      primary_queue = {
+        protocol             = "sqs"
+        endpoint             = module.sqs_primary.queue_arn
+        raw_message_delivery = true
+      }
+    },
+    var.create_secondary_queue ? {
+      secondary_queue = {
+        protocol             = "sqs"
+        endpoint             = module.sqs_secondary[0].queue_arn
+        raw_message_delivery = true
+      }
+    } : {}
+  )
+
   tags = module.tags.tags
 }
 
@@ -129,13 +148,6 @@ data "aws_iam_policy_document" "sns_sqs_policy" {
       values   = [module.sns_topic.topic_arn]
     }
   }
-}
-
-# Subscribe SQS to SNS
-resource "aws_sns_topic_subscription" "sqs_subscription" {
-  topic_arn = module.sns_topic.topic_arn
-  protocol  = "sqs"
-  endpoint  = module.sqs_primary.queue_arn
 }
 
 ################################################################################
@@ -192,13 +204,4 @@ module "sqs_secondary" {
   tags = merge(module.tags.tags, {
     QueueType = "Secondary"
   })
-}
-
-# Subscribe secondary queue
-resource "aws_sns_topic_subscription" "sqs_subscription_secondary" {
-  count = var.create_secondary_queue ? 1 : 0
-
-  topic_arn = module.sns_topic.topic_arn
-  protocol  = "sqs"
-  endpoint  = module.sqs_secondary[0].queue_arn
 }

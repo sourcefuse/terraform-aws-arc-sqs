@@ -32,12 +32,12 @@ module "sqs" {
     throughput_limit            = "perMessageGroupId"
   }
 
-  # Optional: DLQ for FIFO queue
-  # dlq_config = {
-  #   enabled                     = true
-  #   max_receive_count           = 5
-  #   content_based_deduplication = true
-  # }
+  # DLQ for FIFO queue
+  dlq_config = {
+    enabled                     = true
+    max_receive_count           = 5
+    content_based_deduplication = true
+  }
 
   # Tags from arc-tags module
   tags = module.tags.tags

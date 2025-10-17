@@ -1,4 +1,10 @@
+![Module Structure](./static/sqs.png)
 
+# [terraform-aws-arc-sqs](https://github.com/sourcefuse/terraform-aws-arc-sqs)
+
+<a href="https://github.com/sourcefuse/terraform-aws-arc-sqs/releases/latest"><img src="https://img.shields.io/github/release/sourcefuse/terraform-aws-arc-sqs.svg?style=for-the-badge" alt="Latest Release"/></a> <a href="https://github.com/sourcefuse/terraform-aws-arc-sqs/commits"><img src="https://img.shields.io/github/last-commit/sourcefuse/terraform-aws-arc-sqs.svg?style=for-the-badge" alt="Last Updated"/></a> ![Terraform](https://img.shields.io/badge/terraform-%235835CC.svg?style=for-the-badge&logo=terraform&logoColor=white) ![GitHub Actions](https://img.shields.io/badge/github%20actions-%232671E5.svg?style=for-the-badge&logo=githubactions&logoColor=white)
+
+[![Quality gate](https://sonarcloud.io/api/project_badges/quality_gate?project=sourcefuse_terraform-aws-arc-sqs&token=750e4168aaefa037a02d4ec0fc1fb2cf422b73e8)](https://sonarcloud.io/summary/new_code?id=sourcefuse_terraform-aws-arc-sqs)
 
 ## Overview
 
@@ -12,7 +18,7 @@ SourceFuse AWS Reference Architecture (ARC) Terraform module for managing Amazon
 - **Message Configuration**: Fine-grained control over retention, visibility timeouts, delays, and long polling
 - **Queue Policies**: Integrated IAM policy management with support for cross-account and service access patterns
 - **High Throughput FIFO**: Advanced FIFO configurations with per-message-group throughput and deduplication scopes
-- **Modular Design**: Integrates seamlessly with other SourceFuse ARC modules (KMS, Tags, Monitoring)
+- **Modular Design**: Integrates seamlessly with other SourceFuse ARC modules (SNS, KMS, Tags)
 
 ## Usage
 

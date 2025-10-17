@@ -12,7 +12,9 @@ locals {
 
   # DLQ naming logic
   dlq_name = var.dlq_config.enabled ? (
-    var.dlq_config.name != null ? var.dlq_config.name : "${var.name}-dlq"
+    var.dlq_config.name != null ? var.dlq_config.name : (
+      var.fifo_config.enabled ? replace(var.name, ".fifo", "-dlq.fifo") : "${var.name}-dlq"
+    )
   ) : null
 
   # Determine KMS key to use based on priority:

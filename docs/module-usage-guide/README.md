@@ -82,7 +82,9 @@ Key variables:
 - **name**: Name of the SQS queue (required)
 - **fifo_config**: Configuration for FIFO queues with message ordering
 - **message_config**: Message handling settings (retention, visibility timeout, polling)
-- **encryption_config**: Encryption settings (SQS-managed or KMS)
+- **kms_key**: ARN of existing KMS key for encryption (optional)
+- **create_key**: Boolean to create new KMS key (optional)
+- **kms_config**: Configuration for creating new KMS key (optional)
 - **dlq_config**: Dead Letter Queue configuration for handling failed messages
 - **policy_config**: Queue access policy configuration
 - **tags**: Resource tagging for organization and cost tracking
@@ -188,12 +190,10 @@ module "sqs" {
 
   name = "my-encrypted-queue"
 
-  encryption_config = {
-    kms_encryption_enabled       = true
-    create_kms_key               = true
-    kms_key_rotation_enabled     = true
-    kms_data_key_reuse_period    = 300
-    kms_key_deletion_window_days = 30
+  create_key = true
+  kms_config = {
+    deletion_window_days = 30
+    rotation_enabled     = true
   }
 
   tags = module.tags.tags
@@ -204,6 +204,18 @@ Creates:
 - SQS queue with customer-managed KMS encryption
 - Dedicated KMS key with automatic rotation
 - Enhanced security for sensitive workloads
+
+**Alternative - Use existing KMS key:**
+```hcl
+module "sqs" {
+  source = "sourcefuse/arc-sqs/aws"
+
+  name    = "my-encrypted-queue"
+  kms_key = "arn:aws:kms:us-east-1:123456789012:key/abc..."
+
+  tags = module.tags.tags
+}
+```
 
 #### 5. SNS Fanout Queue
 
@@ -288,7 +300,7 @@ Follow AWS security best practices when using this module:
 - [AWS SQS Security Best Practices](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-security-best-practices.html)
 - [AWS KMS Best Practices](https://docs.aws.amazon.com/kms/latest/developerguide/best-practices.html)
 - Enable encryption in transit by using HTTPS endpoints
-- Regularly rotate KMS keys (automatically handled when `kms_key_rotation_enabled = true`)
+- Regularly rotate KMS keys (automatically handled when `create_key = true` with `kms_config.rotation_enabled = true`)
 - Monitor queue access using AWS CloudTrail
 - Implement proper IAM policies for queue producers and consumers
 

@@ -56,8 +56,8 @@ output "kms_key_id" {
 }
 
 output "kms_key_arn" {
-  description = "The Amazon Resource Name (ARN) of the KMS key"
-  value       = var.encryption_config.kms_encryption_enabled ? (var.encryption_config.existing_kms_key_id != null ? var.encryption_config.existing_kms_key_id : (local.kms_count > 0 ? module.kms[0].key_arn : null)) : null
+  description = "The Amazon Resource Name (ARN) of the KMS key used for encryption"
+  value       = local.kms_key_id
 }
 
 output "kms_alias_arn" {

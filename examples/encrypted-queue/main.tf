@@ -10,8 +10,7 @@ module "tags" {
   project     = var.namespace
 
   extra_tags = {
-    Example    = "encrypted-queue"
-    Compliance = "HIPAA"
+    Example = "encrypted-queue"
   }
 }
 
@@ -24,21 +23,18 @@ module "sqs" {
 
   name = var.queue_name
 
-  # Grouped encryption configuration
-  encryption_config = {
-    kms_encryption_enabled       = true
-    create_kms_key               = true
-    kms_key_deletion_window_days = 30
-    kms_key_rotation_enabled     = true
-  }
+  kms_key    = var.kms_key_arn
+  create_key = var.create_kms_key
+  kms_config = var.create_kms_key ? {
+    deletion_window_days = var.kms_deletion_window_days
+    rotation_enabled     = var.kms_rotation_enabled
+  } : null
 
-  # Grouped DLQ configuration
   dlq_config = {
     enabled                   = true
     max_receive_count         = 5
-    message_retention_seconds = 1209600 # 14 days
+    message_retention_seconds = 1209600
   }
 
-  # Tags from arc-tags module
   tags = module.tags.tags
 }

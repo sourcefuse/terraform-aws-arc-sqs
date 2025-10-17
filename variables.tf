@@ -12,18 +12,6 @@ variable "name" {
   }
 }
 
-variable "name_prefix" {
-  description = "Creates a unique name beginning with the specified prefix. Conflicts with name"
-  type        = string
-  default     = null
-}
-
-variable "use_name_prefix" {
-  description = "Determines whether to use `name_prefix` or `name` for the queue name"
-  type        = bool
-  default     = false
-}
-
 ################################################################################
 # FIFO Queue Configuration
 ################################################################################
@@ -100,30 +88,37 @@ variable "message_config" {
 # Encryption Configuration
 ################################################################################
 
-variable "encryption_config" {
-  description = "Encryption configuration for the queue"
+variable "kms_key" {
+  description = "ARN of existing KMS key for queue encryption. If null and create_key=false, uses AWS managed SSE-SQS encryption"
+  type        = string
+  default     = null
+}
+
+variable "create_key" {
+  description = "Whether to create a new KMS key for queue encryption. Ignored if kms_key is provided"
+  type        = bool
+  default     = false
+}
+
+variable "kms_config" {
+  description = "Configuration for creating a new KMS key. Only used if create_key=true and kms_key=null"
   type = object({
-    kms_encryption_enabled       = optional(bool, false)
-    existing_kms_key_id          = optional(string, null)
-    kms_data_key_reuse_period    = optional(number, 300)
-    sqs_managed_sse_enabled      = optional(bool, true)
-    create_kms_key               = optional(bool, false)
-    kms_key_deletion_window_days = optional(number, 7)
-    kms_key_rotation_enabled     = optional(bool, true)
-    kms_key_alias                = optional(string, null)
-    kms_key_policy               = optional(string, null)
-    kms_key_tags                 = optional(map(string), {})
+    data_key_reuse_period = optional(number, 300)
+    deletion_window_days  = optional(number, 7)
+    rotation_enabled      = optional(bool, true)
+    alias                 = optional(string, null)
+    policy                = optional(string, null)
   })
-  default = {}
+  default = null
 
   validation {
-    condition     = var.encryption_config.kms_data_key_reuse_period >= 60 && var.encryption_config.kms_data_key_reuse_period <= 86400
-    error_message = "kms_data_key_reuse_period must be between 60 and 86400 seconds."
+    condition     = var.kms_config == null || (var.kms_config.data_key_reuse_period >= 60 && var.kms_config.data_key_reuse_period <= 86400)
+    error_message = "data_key_reuse_period must be between 60 and 86400 seconds."
   }
 
   validation {
-    condition     = var.encryption_config.kms_key_deletion_window_days >= 7 && var.encryption_config.kms_key_deletion_window_days <= 30
-    error_message = "kms_key_deletion_window_days must be between 7 and 30 days."
+    condition     = var.kms_config == null || (var.kms_config.deletion_window_days >= 7 && var.kms_config.deletion_window_days <= 30)
+    error_message = "deletion_window_days must be between 7 and 30 days."
   }
 }
 
@@ -145,7 +140,6 @@ variable "dlq_config" {
     content_based_deduplication = optional(bool, false)
     deduplication_scope         = optional(string, null)
     throughput_limit            = optional(string, null)
-    sqs_managed_sse_enabled     = optional(bool, true)
     redrive_allow_policy        = optional(string, null)
   })
   default = {
@@ -207,18 +201,6 @@ variable "policy_config" {
 
 variable "tags" {
   description = "A map of tags to assign to all resources"
-  type        = map(string)
-  default     = {}
-}
-
-variable "queue_tags" {
-  description = "Additional tags specific to the main queue"
-  type        = map(string)
-  default     = {}
-}
-
-variable "dlq_tags" {
-  description = "Additional tags specific to the dead letter queue"
   type        = map(string)
   default     = {}
 }
